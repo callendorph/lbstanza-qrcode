@@ -1,0 +1,45 @@
+#use-added-syntax(tests)
+defpackage QRCode/tests :
+  import core
+  import QRCode/QRCode
+  import QRCode/Encoder
+
+
+deftest(qrcode) gen-text-qrcode :
+
+  val encoder = QRCodeEncoder(ECC_LOW, MASK_AUTO)
+  val qr = encode-text(encoder, "http://g.co")
+
+  val lines = to-tuple(qr)
+
+  val qrSize = size(qr)
+  #EXPECT(length(lines) == qrSize)
+  #EXPECT(length(lines[0]) == qrSize)
+
+  val exp =[
+    [1 1 1 1 1 1 1 0 1 1 1 0 0 0 1 1 1 1 1 1 1]
+    [1 0 0 0 0 0 1 0 0 1 0 1 0 0 1 0 0 0 0 0 1]
+    [1 0 1 1 1 0 1 0 0 1 1 0 0 0 1 0 1 1 1 0 1]
+    [1 0 1 1 1 0 1 0 0 1 1 1 1 0 1 0 1 1 1 0 1]
+    [1 0 1 1 1 0 1 0 1 1 0 0 1 0 1 0 1 1 1 0 1]
+    [1 0 0 0 0 0 1 0 1 1 1 0 0 0 1 0 0 0 0 0 1]
+    [1 1 1 1 1 1 1 0 1 0 1 0 1 0 1 1 1 1 1 1 1]
+    [0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0]
+    [0 1 1 1 1 1 1 1 0 0 0 0 1 0 0 1 1 0 0 0 1]
+    [1 0 1 1 0 1 0 1 1 1 1 0 0 1 0 1 1 1 1 1 1]
+    [0 1 1 0 1 1 1 0 1 0 1 0 1 1 1 0 0 0 1 1 0]
+    [0 1 1 1 1 0 0 0 1 1 1 1 1 0 0 0 1 1 1 0 0]
+    [1 1 0 0 1 0 1 0 1 0 1 0 1 0 1 0 1 1 0 0 1]
+    [0 0 0 0 0 0 0 0 1 1 1 1 0 1 1 1 1 1 1 0 1]
+    [1 1 1 1 1 1 1 0 1 1 0 1 0 0 1 1 0 0 1 1 0]
+    [1 0 0 0 0 0 1 0 1 1 1 0 0 1 0 0 1 1 1 1 1]
+    [1 0 1 1 1 0 1 0 1 1 1 1 1 0 1 0 1 1 0 0 1]
+    [1 0 1 1 1 0 1 0 1 1 1 0 1 0 0 1 1 0 1 0 0]
+    [1 0 1 1 1 0 1 0 1 0 0 0 1 1 1 1 0 0 1 0 0]
+    [1 0 0 0 0 0 1 0 1 1 0 1 0 1 0 1 1 0 1 0 0]
+    [1 1 1 1 1 1 1 0 0 1 1 1 0 0 1 1 1 1 0 1 0]
+    ]
+
+  for y in 0 to qrSize do:
+    for x in 0 to qrSize do:
+      #EXPECT(lines[y][x] == exp[y][x])

@@ -1,0 +1,9 @@
+defpackage QRCode/Errors :
+  import core
+
+public defstruct QRCodeException <: Exception :
+  msg:String
+
+defmethod print (o:OutputStream, e:QRCodeException) :
+  val m = msg(e)
+  print(o, "QR Code Error: %_" % [m])

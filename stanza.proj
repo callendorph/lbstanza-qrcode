@@ -1,0 +1,23 @@
+package QRCode/QRCode defined-in "src/QRCode.stanza"
+package QRCode/Encoder defined-in "src/Encoder.stanza"
+package QRCode/Errors defined-in "src/Errors.stanza"
+
+package QRCode/QRCode requires :
+  ccfiles :
+    "{.}/QR-Code-generator/c/qrcodegen.c"
+    "src/Wrapper.c"
+  ccflags :
+    "-I{.}/QR-Code-generator/c/"
+
+package QRCode/tests defined-in "tests/QRCode.stanza"
+
+build main :
+  inputs:
+    QRCode/QRCode
+  pkg: "pkgs"
+
+build-test qrcode-tests :
+  inputs:
+    QRCode/tests
+  pkg: "pkgs"
+  o: "qrcode-tests"

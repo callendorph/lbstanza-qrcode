@@ -1,0 +1,84 @@
+defpackage QRCode/Encoder :
+  import core
+  import QRCode/QRCode
+  import QRCode/Errors
+
+; Wrapper functions to access macros
+extern get_buffer_len_for_version : (int) -> int
+extern get_buffer_len_MAX : () -> int
+
+extern get_qr_version_min : () -> int
+extern get_qr_version_max : () -> int
+
+; QR Code Generator Functions
+extern qrcodegen_encodeText : (
+  ptr<byte>, ptr<?>, ptr<?>,
+  int, int, int, int, int
+) -> int
+
+
+; ECC Values
+public val ECC_LOW = 0
+public val ECC_MEDIUM = 1
+public val ECC_QUARTILE = 2
+public val ECC_HIGH = 3
+
+public val MASK_AUTO = -1
+public val MASK_0 = 0
+public val MASK_1 = 1
+public val MASK_2 = 2
+public val MASK_3 = 3
+public val MASK_4 = 4
+public val MASK_5 = 5
+public val MASK_6 = 6
+public val MASK_7 = 7
+
+
+public lostanza deftype QRCodeEncoder <: Unique :
+  ecc : int
+  minVersion: int
+  maxVersion: int
+  mask : int
+  boost : int
+
+public lostanza defn get-qrcode-min-version () -> ref<Int> :
+  val ret = call-c get_qr_version_min()
+  return new Int{ret}
+
+public lostanza defn get-qrcode-max-version () -> ref<Int> :
+  val ret = call-c get_qr_version_max()
+  return new Int{ret}
+
+public lostanza defn QRCodeEncoder (ecc:ref<Int>, minVersion:ref<Int>, maxVersion:ref<Int>, mask:ref<Int>, boost:ref<Int>) -> ref<QRCodeEncoder> :
+  val ret = new QRCodeEncoder{ecc.value, minVersion.value, maxVersion.value, mask.value, boost.value}
+  return ret
+
+public lostanza defn QRCodeEncoder (ecc:ref<Int>, mask:ref<Int>) -> ref<QRCodeEncoder> :
+  val minVersion = get-qrcode-min-version()
+  val maxVersion = get-qrcode-max-version()
+  return QRCodeEncoder(ecc, minVersion, maxVersion, mask, new Int{1})
+
+public lostanza defn encode-text (self:ref<QRCodeEncoder>, content:ref<String>) -> ref<QRCode> :
+  val ret = QRCode()
+  val qrBuf = get-buf(ret)
+
+  val maxBufSize = call-c get_buffer_len_MAX()
+  val tempBuf = call-c clib/malloc(maxBufSize)
+  if tempBuf == null :
+    throw(QRCodeException(String("Failed to Allocate buffer for QR Code")))
+
+  val ok = call-c qrcodegen_encodeText(
+    addr!(content.chars),
+    tempBuf,
+    qrBuf,
+    self.ecc,
+    self.minVersion,
+    self.maxVersion,
+    self.mask,
+    self.boost
+  )
+  call-c clib/free(tempBuf)
+  if ok == 0 :
+    throw(QRCodeException(String("Failed to Encode Content as QR Code")))
+
+  return ret

@@ -1,0 +1,66 @@
+defpackage QRCode/QRCode :
+  import core
+  import QRCode/Errors
+
+extern get_buffer_len_MAX : () -> int
+extern qrcodegen_getSize : (ptr<?>) -> int
+extern qrcodegen_getModule : (ptr<?>, int, int) -> int
+
+public lostanza deftype QRCodeFinalizer <: Finalizer :
+  buf : ptr<?>
+
+lostanza defmethod run (self:ref<QRCodeFinalizer>) -> ref<False> :
+  call-c clib/free(self.buf)
+  return false
+
+public lostanza deftype QRCode <: Unique :
+  buf : ptr<?>
+
+public lostanza defn QRCode () -> ref<QRCode> :
+  val maxBufSize = call-c get_buffer_len_MAX()
+  ; @NOTE - This buffer gets cleaned up by the QRCode finalizer
+  val qrBuf = call-c clib/malloc(maxBufSize) as ptr<?>
+  if qrBuf == null :
+    throw(QRCodeException(String("Failed to Allocate buffer for QR Code")))
+  val ret = new QRCode{qrBuf}
+  add-finalizer(new QRCodeFinalizer{qrBuf}, ret)
+  return ret
+
+public lostanza defn get-buf (self:ref<QRCode>) -> ptr<?> :
+  return self.buf
+
+public lostanza defn size (self:ref<QRCode>) -> ref<Int> :
+  val qrSize = call-c qrcodegen_getSize(self.buf)
+  return new Int{qrSize}
+
+public lostanza defn active? (self:ref<QRCode>, x:ref<Int>, y:ref<Int>) -> ref<Int> :
+  val active = call-c qrcodegen_getModule(self.buf, x.value, y.value)
+  return new Int{active}
+
+public defn to-tuple (self:QRCode) -> Tuple<Tuple<Int>> :
+  val qrSize = size(self)
+  val ret = Array<Tuple<Int>>(qrSize)
+  for y in 0 to qrSize do:
+    val line = to-tuple(map({active?(self, _, y)}, 0 to qrSize))
+    ret[y] = line
+  to-tuple(ret)
+
+defmethod print (o:OutputStream, qr:QRCode) :
+  ; This prints out the QR code to an output stream.
+  ;  Note that I haven't been able to capture this
+  ;  with my iphone from the terminal. This is
+  ;  primarily for debugging.
+  print(o, "\n\n")
+
+  defn to-qr-str (v:Int) -> String :
+    "X " when v == 1 else "  "
+
+  val tupLines = to-tuple(qr)
+  for x in tupLines do:
+    val line = string-join(map(to-qr-str, x))
+    print(o, "\t%_\n" % [line])
+
+  print(o, "\n\n")
+
+
+

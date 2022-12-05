@@ -1,0 +1,60 @@
+defpackage QRCode/PNG :
+  import core
+  import QRCode/QRCode
+  import cairo/Context
+  import cairo/Geometry
+  import cairo/ImageSurface
+  import cairo/PNG
+  import cairo/Paths
+  import cairo/Colors
+
+val BG_COLOR = RGB(1.0, 1.0, 1.0)
+val FG_COLOR = RGB(0.0, 0.0, 0.0)
+
+public defn write-qrcode-rects (ctx:Context, code:QRCode, pitch:Double, margin:Double) :
+  ; Write the mask with rectangle paths that outline
+  ;  the pips of the QR Code.
+  ; Use is responsible for setting the source and then completing
+  ;  the operation on the surface.
+  val qrSize = size(code)
+
+  ; Set Pip's
+  val origin = margin * Point2D(1, 1)
+  val pip = pitch * Rectangle(0, 0, 1, 1)
+  for y in 0 to qrSize do:
+    for x in 0 to qrSize do:
+      if active?(code, x, y) > 0:
+        val offset = pitch * Point2D(x,y)
+
+        val r = origin + offset + pip
+        rectangle(ctx, r)
+
+
+public defn write-png (code:QRCode, path:String, pitch:Double, margin:Double) :
+  ; Write the QR Code out to a PNG image. This is primarily an example of how to
+  ;  generate the QR Code on a Cairo surface. The user could use a similar method to
+  ;  write to any Cairo surface type.
+  ;  @param pitch - size of each square block of the QR Code. Value in pixels.
+  ;  @margin amount of space around QR code. This is typically needed
+  ;    by the image processing algorithms that decode the QR Code.
+
+  val qrSize = size(code)
+  val outSize:Double = (to-double(qrSize) * pitch) + (2.0 * margin)
+  val w = to-int(outSize)
+  val h = w
+
+  val imgSf = ImageSurface(CAIRO_FORMAT_RGB24, w, h)
+  val sf = to-surface(imgSf)
+  val ctx = Context(sf)
+  check-status(ctx)
+
+  set-source(ctx, BG_COLOR)
+  rectangle(ctx, Rectangle(0,0,w,h))
+  fill(ctx)
+
+  set-source(ctx, FG_COLOR)
+  write-qrcode-rects(ctx, code, pitch, margin)
+  fill(ctx)
+
+  write-surface-to-png(sf, path)
+

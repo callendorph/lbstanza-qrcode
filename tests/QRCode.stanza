@@ -3,12 +3,15 @@ defpackage QRCode/tests :
   import core
   import QRCode/QRCode
   import QRCode/Encoder
+  import QRCode/PNG
 
 
 deftest(qrcode) gen-text-qrcode :
 
   val encoder = QRCodeEncoder(ECC_LOW, MASK_AUTO)
   val qr = encode-text(encoder, "http://g.co")
+
+  println("%~" % [qr])
 
   val lines = to-tuple(qr)
 
@@ -43,3 +46,5 @@ deftest(qrcode) gen-text-qrcode :
   for y in 0 to qrSize do:
     for x in 0 to qrSize do:
       #EXPECT(lines[y][x] == exp[y][x])
+
+  write-png(qr, "test-qr.png", 5.0, 20.0)

@@ -9,6 +9,9 @@ package QRCode/QRCode requires :
   ccflags :
     "-I{.}/QR-Code-generator/c/"
 
+include "lbstanza-cairo/stanza.proj"
+package QRCode/PNG defined-in "src/PNG.stanza"
+
 package QRCode/tests defined-in "tests/QRCode.stanza"
 
 build main :

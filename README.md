@@ -37,11 +37,10 @@ Cairo is needed to generate the PNG image of the QR code.
 ## Run Tests
 
 ```
-$> stanza build qrcode-tests
 $> make tests
 stanza build
 stanza build qrcode-tests
-./qrcode-tests
+QRCODE_SHARED_LIB="./QRCode.so" ./qrcode-tests
 [Test 1] gen-text-qrcode
 
 

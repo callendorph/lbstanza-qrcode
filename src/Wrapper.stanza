@@ -1,0 +1,117 @@
+defpackage QRCode/Wrapper :
+  import core
+  import core/dynamic-library
+
+#if-defined(COMPILE-STATIC):
+
+  extern get_buffer_len_for_version : (int) -> int
+  extern get_buffer_len_MAX : () -> int
+
+  extern get_qr_version_min : () -> int
+  extern get_qr_version_max : () -> int
+
+  ; QR Code Generator Functions
+  extern qrcodegen_encodeText : (
+    ptr<byte>, ptr<?>, ptr<?>,
+    int, int, int, int, int
+  ) -> int
+
+  extern qrcodegen_getSize : (ptr<?>) -> int
+  extern qrcodegen_getModule : (ptr<?>, int, int) -> int
+
+  public lostanza defn w_get_buffer_len_for_version (v:int) -> int :
+    val ret = call-c get_buffer_len_for_version(v)
+    return ret
+
+  public lostanza defn w_get_buffer_len_MAX () -> int :
+    val ret = call-c get_buffer_len_MAX()
+    return ret
+
+  public lostanza defn w_get_qr_version_min () -> int :
+    val ret = call-c get_qr_version_min()
+    return ret
+
+  public lostanza defn w_get_qr_version_max () -> int :
+    val ret = call-c get_qr_version_max()
+    return ret
+
+  public lostanza defn w_qrcodegen_encodeText (text:ptr<byte>, tempBuf:ptr<?>, qrcode:ptr<?>, ecl:int, minVersion:int, maxVersion:int, mask:int, boostEcl:int) -> int :
+    val ret = call-c qrcodegen_encodeText(
+        text, tempBuf, qrcode, ecl, minVersion, maxVersion, mask, boostEcl
+      )
+    return ret
+
+  public lostanza defn w_qrcodegen_getSize (p:ptr<?>) -> int :
+    val ret = call-c qrcodegen_getSize(p)
+    return ret
+
+  public lostanza defn w_qrcodegen_getModule (p:ptr<?>, x:int, y:int) -> int :
+    val ret = call-c qrcodegen_getModule(p, x, y)
+    return ret
+
+#else :
+
+  defn get-shared-lib () -> String :
+    label<String> return:
+      var sharedLib = get-env("QRCODE_SHARED_LIB")
+      match(sharedLib) :
+        (fpath:String) :
+          return(fpath)
+        (x:False):
+          return("./QRCode.dll")
+
+  val shlib = get-shared-lib()
+  val QRLIB = dynamic-library-open(shlib)
+
+  lostanza val p_get_buffer_len_for_version: ptr<( (int) -> int )> =
+    dynamic-library-symbol(QRLIB, String("get_buffer_len_for_version")).address
+
+  public lostanza defn w_get_buffer_len_for_version (v:int) -> int :
+    val ret = call-c [p_get_buffer_len_for_version](v)
+    return ret
+
+  lostanza val p_get_buffer_len_MAX: ptr<( () -> int )> =
+    dynamic-library-symbol(QRLIB, String("get_buffer_len_MAX")).address
+
+  public lostanza defn w_get_buffer_len_MAX () -> int :
+    val ret = call-c [p_get_buffer_len_MAX]()
+    return ret
+
+  lostanza val p_get_qr_version_min: ptr<( () -> int )> =
+    dynamic-library-symbol(QRLIB, String("get_qr_version_min")).address
+
+  public lostanza defn w_get_qr_version_min () -> int :
+    val ret = call-c [p_get_qr_version_min]()
+    return ret
+
+  lostanza val p_get_qr_version_max: ptr<( () -> int )> =
+    dynamic-library-symbol(QRLIB, String("get_qr_version_max")).address
+
+  public lostanza defn w_get_qr_version_max () -> int :
+    val ret = call-c [p_get_qr_version_max]()
+    return ret
+
+  lostanza val p_qrcodegen_encodeText: ptr<( (ptr<byte>, ptr<?>, ptr<?>, int, int, int, int, int) -> int )> =
+    dynamic-library-symbol(QRLIB, String("qrcodegen_encodeText")).address
+
+  public lostanza defn w_qrcodegen_encodeText (text:ptr<byte>, tempBuf:ptr<?>, qrcode:ptr<?>, ecl:int, minVersion:int, maxVersion:int, mask:int, boostEcl:int) -> int :
+    val ret = call-c [p_qrcodegen_encodeText](
+        text, tempBuf, qrcode, ecl, minVersion, maxVersion, mask, boostEcl
+      )
+    return ret
+
+  lostanza val p_qrcodegen_getSize: ptr<( (ptr<?>) -> int )> =
+    dynamic-library-symbol(QRLIB, String("qrcodegen_getSize")).address
+
+  public lostanza defn w_qrcodegen_getSize (p:ptr<?>) -> int :
+    val ret = call-c [p_qrcodegen_getSize](p)
+    return ret
+
+  lostanza val p_qrcodegen_getModule: ptr<( (ptr<?>, int, int) -> int )> =
+    dynamic-library-symbol(QRLIB, String("qrcodegen_getModule")).address
+
+  public lostanza defn w_qrcodegen_getModule (p:ptr<?>, x:int, y:int) -> int :
+    val ret = call-c [p_qrcodegen_getModule](p, x, y)
+    return ret
+
+

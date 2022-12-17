@@ -1,10 +1,8 @@
 defpackage QRCode/QRCode :
   import core
   import QRCode/Errors
-
-extern get_buffer_len_MAX : () -> int
-extern qrcodegen_getSize : (ptr<?>) -> int
-extern qrcodegen_getModule : (ptr<?>, int, int) -> int
+  import QRCode/Wrapper
+  import core/dynamic-library
 
 public lostanza deftype QRCodeFinalizer <: Finalizer :
   buf : ptr<?>
@@ -17,7 +15,7 @@ public lostanza deftype QRCode <: Unique :
   buf : ptr<?>
 
 public lostanza defn QRCode () -> ref<QRCode> :
-  val maxBufSize = call-c get_buffer_len_MAX()
+  val maxBufSize = w_get_buffer_len_MAX()
   ; @NOTE - This buffer gets cleaned up by the QRCode finalizer
   val qrBuf = call-c clib/malloc(maxBufSize) as ptr<?>
   if qrBuf == null :
@@ -30,11 +28,11 @@ public lostanza defn get-buf (self:ref<QRCode>) -> ptr<?> :
   return self.buf
 
 public lostanza defn size (self:ref<QRCode>) -> ref<Int> :
-  val qrSize = call-c qrcodegen_getSize(self.buf)
+  val qrSize = w_qrcodegen_getSize(self.buf)
   return new Int{qrSize}
 
 public lostanza defn active? (self:ref<QRCode>, x:ref<Int>, y:ref<Int>) -> ref<Int> :
-  val active = call-c qrcodegen_getModule(self.buf, x.value, y.value)
+  val active = w_qrcodegen_getModule(self.buf, x.value, y.value)
   return new Int{active}
 
 public defn to-tuple (self:QRCode) -> Tuple<Tuple<Int>> :

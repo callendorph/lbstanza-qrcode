@@ -2,20 +2,7 @@ defpackage QRCode/Encoder :
   import core
   import QRCode/QRCode
   import QRCode/Errors
-
-; Wrapper functions to access macros
-extern get_buffer_len_for_version : (int) -> int
-extern get_buffer_len_MAX : () -> int
-
-extern get_qr_version_min : () -> int
-extern get_qr_version_max : () -> int
-
-; QR Code Generator Functions
-extern qrcodegen_encodeText : (
-  ptr<byte>, ptr<?>, ptr<?>,
-  int, int, int, int, int
-) -> int
-
+  import QRCode/Wrapper
 
 ; ECC Values
 public val ECC_LOW = 0
@@ -42,11 +29,11 @@ public lostanza deftype QRCodeEncoder <: Unique :
   boost : int
 
 public lostanza defn get-qrcode-min-version () -> ref<Int> :
-  val ret = call-c get_qr_version_min()
+  val ret = w_get_qr_version_min()
   return new Int{ret}
 
 public lostanza defn get-qrcode-max-version () -> ref<Int> :
-  val ret = call-c get_qr_version_max()
+  val ret = w_get_qr_version_max()
   return new Int{ret}
 
 public lostanza defn QRCodeEncoder (ecc:ref<Int>, minVersion:ref<Int>, maxVersion:ref<Int>, mask:ref<Int>, boost:ref<Int>) -> ref<QRCodeEncoder> :
@@ -62,12 +49,12 @@ public lostanza defn encode-text (self:ref<QRCodeEncoder>, content:ref<String>) 
   val ret = QRCode()
   val qrBuf = get-buf(ret)
 
-  val maxBufSize = call-c get_buffer_len_MAX()
+  val maxBufSize = w_get_buffer_len_MAX()
   val tempBuf = call-c clib/malloc(maxBufSize)
   if tempBuf == null :
     throw(QRCodeException(String("Failed to Allocate buffer for QR Code")))
 
-  val ok = call-c qrcodegen_encodeText(
+  val ok = w_qrcodegen_encodeText(
     addr!(content.chars),
     tempBuf,
     qrBuf,
